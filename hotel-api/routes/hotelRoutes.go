@@ -15,4 +15,5 @@ func SetupHotelRoutes(r *gin.Engine) {
 	r.GET("/hotels/getHotel/:id", hotelController.GetHotel)          // /getHotel/:id: Obtener un hotel por ID
 	r.PUT("/hotels/updateHotel/:id", hotelController.UpdateHotel)    // /updateHotel/:id: Actualizar un hotel
 	r.DELETE("/hotels/deleteHotel/:id", hotelController.DeleteHotel) // /deleteHotel/:id: Eliminar un hotel
+	r.GET("/hotels/check-existence/:hotelID", controllers.CheckHotelExistence)
 }

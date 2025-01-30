@@ -16,5 +16,7 @@ func SetupUserRoutes(router *gin.Engine) {
 		userGroup.GET("/validate", middleware.RequireAuth, controllers.Validate)      // Validar sesión
 		userGroup.GET("/current", middleware.RequireAuth, controllers.GetCurrentUser) // Obtener usuario actual
 		userGroup.POST("/logout", controllers.Logout)                                 // Cerrar sesión
+		// Nueva ruta para verificar si el usuario existe
+		userGroup.GET("/checkExistence/:userID", controllers.CheckUserExistence) // Verificar existencia de usuario
 	}
 }

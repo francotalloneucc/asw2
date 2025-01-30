@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"fmt"
+	"hotel-api/initializers"
 	"hotel-api/models"
 	"hotel-api/services"
 	"net/http"
@@ -109,4 +111,19 @@ func (ctrl *HotelController) DeleteHotel(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Hotel deleted successfully"})
+}
+
+func CheckHotelExistence(c *gin.Context) {
+	hotelID := c.Param("hotelID")
+
+	var hotel models.Hotel
+	// Buscar el hotel en la base de datos usando MongoDB
+	if err := initializers.DB.Collection("hotels").FindOne(c, map[string]interface{}{"hotelID": hotelID}).Decode(&hotel); err != nil {
+		// Si el hotel no existe, devolver 404
+		c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("Hotel with ID %s does not exist", hotelID)})
+		return
+	}
+
+	// Si el hotel existe, devolver 200 OK
+	c.JSON(http.StatusOK, gin.H{"message": "Hotel exists"})
 }

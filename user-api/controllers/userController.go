@@ -3,6 +3,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"user-reservation-api/dtos"
 	"user-reservation-api/initializers"
@@ -65,4 +66,24 @@ func Logout(c *gin.Context) {
 	// Eliminar la cookie de autorización
 	c.SetCookie("Authorization", "", -1, "/", "", false, true)
 	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
+}
+
+// CheckUserExistence verifica si un usuario existe
+func CheckUserExistence(c *gin.Context) {
+	userID := c.Param("userID")
+
+	var user models.User
+	if err := initializers.DB.Where("id = ?", userID).First(&user).Error; err != nil {
+		// Si el usuario no existe, devolver 404
+		if err.Error() == "record not found" {
+			c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("User with ID %s does not exist", userID)})
+			return
+		}
+		// Error en la base de datos
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		return
+	}
+
+	// Si el usuario existe, devolver 200 OK
+	c.JSON(http.StatusOK, gin.H{"message": "User exists"})
 }
