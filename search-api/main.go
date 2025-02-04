@@ -3,23 +3,16 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
-	"search-api/initializers"
-	"search-api/routes"
-
+	"search-api/consumer"
 )
 
-func init() {
-	initializers.LoadEnv()
-}
-
 func main() {
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
+	// Iniciar el consumidor para escuchar la cola de RabbitMQ
+	fmt.Println("Iniciando el consumidor de RabbitMQ...")
 
-	r := routes.SetupRouter()
-	log.Printf("Starting server on port %s...", port)
-	r.Run(fmt.Sprintf(":%s", port))
+	// Llamar al método Consume para que comience a recibir y procesar los mensajes
+	err := consumer.Consume()
+	if err != nil {
+		log.Fatalf("Error al consumir los mensajes: %v", err)
+	}
 }

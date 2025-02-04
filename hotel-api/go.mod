@@ -5,6 +5,7 @@ go 1.21.1
 require (
 	github.com/gin-contrib/cors v1.7.3
 	github.com/gin-gonic/gin v1.10.0
+	github.com/streadway/amqp v1.1.0
 	go.mongodb.org/mongo-driver v1.17.2
 )
 

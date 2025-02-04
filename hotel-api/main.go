@@ -14,6 +14,12 @@ func init() {
 
 	// Conectar a la base de datos
 	initializers.ConnectMongo()
+
+	// Conectar a RabbitMQ
+	err := initializers.ConnectRabbitMQ() // Llamamos a la función para inicializar RabbitMQ
+	if err != nil {
+		panic("Failed to connect to RabbitMQ") // En caso de error, paramos la aplicación
+	}
 }
 
 func main() {

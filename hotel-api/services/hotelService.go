@@ -2,11 +2,15 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"hotel-api/initializers"
 	"hotel-api/models"
+	"log"
 	"strings"
 
+	"github.com/streadway/amqp"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -33,6 +37,63 @@ func validateAmenitiesExist(amenities []string) error {
 	return nil
 }
 
+// Enviar un mensaje a RabbitMQ
+func SendHotelCreationMessage(hotel models.Hotel) error {
+	if initializers.RabbitMQChannel == nil {
+		log.Println("RabbitMQ channel is not initialized")
+		return fmt.Errorf("RabbitMQ channel is not initialized")
+	}
+
+	message := map[string]interface{}{
+		"id":        hotel.ID.Hex(),
+		"name":      hotel.Name,
+		"address":   hotel.Address,
+		"city":      hotel.City,
+		"country":   hotel.Country,
+		"amenities": hotel.Amenities,
+	}
+
+	// Convertir el mensaje a JSON
+	body, err := json.Marshal(message)
+	if err != nil {
+		log.Printf("Failed to marshal hotel message: %s", err)
+		return err
+	}
+
+	// Asegurarse de que la cola "hotel_created" esté declarada
+	_, err = initializers.RabbitMQChannel.QueueDeclare(
+		"hotel_created", // nombre de la cola
+		true,            // durable
+		false,           // auto-deleted
+		false,           // exclusive
+		false,           // no-wait
+		nil,             // argumentos adicionales
+	)
+	if err != nil {
+		log.Printf("Failed to declare queue: %s", err)
+		return err
+	}
+
+	// Publicar el mensaje
+	err = initializers.RabbitMQChannel.Publish(
+		"",              // exchange
+		"hotel_created", // routing key (nombre de la cola)
+		false,           // mandatory
+		false,           // immediate
+		amqp.Publishing{
+			ContentType: "application/json",
+			Body:        body,
+		},
+	)
+	if err != nil {
+		log.Printf("Failed to publish message: %s", err)
+		return err
+	}
+
+	log.Println("Message sent to RabbitMQ queue: hotel_created")
+	return nil
+}
+
 // Crear un hotel
 func CreateHotel(hotelDto models.Hotel) (models.Hotel, error) {
 	// Verificar que las amenidades existan
@@ -45,6 +106,12 @@ func CreateHotel(hotelDto models.Hotel) (models.Hotel, error) {
 	collection := initializers.DB.Collection("hotels")
 	_, err := collection.InsertOne(context.Background(), hotelDto)
 	if err != nil {
+		return models.Hotel{}, err
+	}
+
+	// Enviar mensaje a RabbitMQ después de crear el hotel
+	if err := SendHotelCreationMessage(hotelDto); err != nil {
+		log.Printf("Failed to send hotel creation message: %s", err)
 		return models.Hotel{}, err
 	}
 
