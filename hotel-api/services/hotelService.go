@@ -190,3 +190,26 @@ func DeleteHotel(id primitive.ObjectID) error {
 
 	return nil
 }
+
+// CheckDuplicateHotel verifica si ya existe un hotel con el mismo nombre y dirección
+func CheckDuplicateHotel(hotelDto models.Hotel) (bool, error) {
+	collection := initializers.DB.Collection("hotels")
+
+	// Buscar si hay un hotel con el mismo nombre y dirección
+	var existingHotel models.Hotel
+	filter := bson.M{
+		"name":    hotelDto.Name,
+		"address": hotelDto.Address,
+	}
+	err := collection.FindOne(context.Background(), filter).Decode(&existingHotel)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			// No hay hotel duplicado
+			return false, nil
+		}
+		return false, err // Otro error, posiblemente de conexión a la base de datos
+	}
+
+	// Si encontramos un hotel, devolvemos true
+	return true, nil
+}

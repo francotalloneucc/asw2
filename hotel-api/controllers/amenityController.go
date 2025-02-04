@@ -5,7 +5,6 @@ import (
 	"hotel-api/models"
 	"hotel-api/services"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -13,11 +12,22 @@ import (
 
 type AmenityController struct{}
 
-// Crear un nuevo amenity
+// crear amenity
 func (ctrl *AmenityController) CreateAmenity(c *gin.Context) {
 	var amenityDto dtos.AmenityDto
 	if err := c.ShouldBindJSON(&amenityDto); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Verificar si ya existe una amenidad con el mismo nombre
+	exists, err := services.CheckDuplicate(amenityDto.Name)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error checking for duplicate amenity"})
+		return
+	}
+	if exists {
+		c.JSON(http.StatusConflict, gin.H{"error": "Amenity with this name already exists"})
 		return
 	}
 
@@ -27,12 +37,7 @@ func (ctrl *AmenityController) CreateAmenity(c *gin.Context) {
 
 	createdAmenity, err := services.CreateAmenity(amenity)
 	if err != nil {
-		// Verificar si el error es debido a un amenity ya existente
-		if strings.Contains(err.Error(), "already exists") {
-			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create amenity"})
-		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create amenity"})
 		return
 	}
 
@@ -84,6 +89,17 @@ func (ctrl *AmenityController) UpdateAmenity(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&amenityDto); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Verificar si ya existe una amenidad con el mismo nombre, excluyendo la actual
+	exists, err := services.CheckDuplicate(amenityDto.Name)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error checking for duplicate amenity"})
+		return
+	}
+	if exists {
+		c.JSON(http.StatusConflict, gin.H{"error": "Amenity with this name already exists"})
 		return
 	}
 

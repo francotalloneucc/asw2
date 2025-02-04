@@ -6,7 +6,6 @@ import (
 	"hotel-api/models"
 	"hotel-api/services"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -22,18 +21,26 @@ func (ctrl *HotelController) CreateHotel(c *gin.Context) {
 		return
 	}
 
-	hotel, err := services.CreateHotel(hotelDto)
+	// Verificar si el hotel ya existe con el mismo nombre y dirección
+	duplicate, err := services.CheckDuplicateHotel(hotelDto)
 	if err != nil {
-		// Si el error es de conflicto (hotel ya existe)
-		if strings.Contains(err.Error(), "hotel with the same Name, Address, City, and Country already exists") {
-			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create hotel"})
-		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check for duplicate hotel"})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"ID": hotel.ID.Hex()}) // Usamos .Hex() para convertir ObjectID a string
+	if duplicate {
+		c.JSON(http.StatusConflict, gin.H{"error": "Hotel with the same name and address already exists"})
+		return
+	}
+
+	// Si no hay duplicado, crear el hotel
+	hotel, err := services.CreateHotel(hotelDto)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create hotel"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"ID": hotel.ID.Hex()})
 }
 
 // Obtener un hotel por ID
@@ -84,6 +91,19 @@ func (ctrl *HotelController) UpdateHotel(c *gin.Context) {
 		return
 	}
 
+	// Verificar si el hotel con el mismo nombre y dirección ya existe, pero excluyendo este hotel
+	duplicate, err := services.CheckDuplicateHotel(hotelDto)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check for duplicate hotel"})
+		return
+	}
+
+	if duplicate {
+		c.JSON(http.StatusConflict, gin.H{"error": "Hotel with the same name and address already exists"})
+		return
+	}
+
+	// Si no hay duplicado, actualizar el hotel
 	hotel, err := services.UpdateHotel(objectID, hotelDto)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update hotel"})

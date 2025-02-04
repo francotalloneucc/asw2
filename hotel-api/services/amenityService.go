@@ -88,3 +88,24 @@ func DeleteAmenity(id primitive.ObjectID) error {
 
 	return nil
 }
+
+// CheckDuplicate verifica si ya existe una amenidad con el mismo nombre
+func CheckDuplicate(name string) (bool, error) {
+	collection := initializers.DB.Collection("amenities")
+
+	var result models.Amenity
+	err := collection.FindOne(context.Background(), bson.M{"name": name}).Decode(&result)
+
+	// Si no se encuentra ningún documento, significa que no hay duplicados
+	if err == mongo.ErrNoDocuments {
+		return false, nil
+	}
+
+	// Si encontramos un error distinto a "no documents", lo devolvemos
+	if err != nil {
+		return false, err
+	}
+
+	// Si llegamos aquí, es porque encontramos una amenidad con ese nombre
+	return true, nil
+}
