@@ -59,3 +59,21 @@ func SendToSolr(message []byte) error {
 	log.Println("Document successfully indexed in Solr.")
 	return nil
 }
+
+// SearchHotels busca hoteles en Solr según una consulta de búsqueda
+func SearchHotels(query string) (map[string]interface{}, error) {
+	solrURL := fmt.Sprintf("http://localhost:8983/solr/hotel_core/select?q=%s&wt=json", query)
+
+	resp, err := http.Get(solrURL)
+	if err != nil {
+		return nil, fmt.Errorf("Error al hacer la solicitud a Solr: %v", err)
+	}
+	defer resp.Body.Close()
+
+	var result map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("Error al decodificar la respuesta de Solr: %v", err)
+	}
+
+	return result, nil
+}
