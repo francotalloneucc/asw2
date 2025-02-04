@@ -88,6 +88,8 @@ func Consume() error {
 // indexHotelInSolr indexa un hotel en Solr
 func indexHotelInSolr(hotel map[string]interface{}) error {
 	// Crear un documento Solr con el hotel
+	log.Println("indexando hotel en solr", hotel)
+
 	solrDoc := map[string]interface{}{
 		"add": map[string]interface{}{
 			"doc": hotel,
@@ -122,7 +124,7 @@ func indexHotelInSolr(hotel map[string]interface{}) error {
 	// Verificar la respuesta
 	if resp.StatusCode != http.StatusOK {
 		log.Printf("Error al indexar en Solr. Código de respuesta: %d\n", resp.StatusCode)
-		return fmt.Errorf("Error al indexar en Solr. Código de respuesta: %d", resp.StatusCode)
+		return fmt.Errorf("error al indexar en Solr. Código de respuesta: %d", resp.StatusCode)
 	}
 
 	log.Println("Hotel indexado en Solr con éxito")
