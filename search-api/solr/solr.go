@@ -56,9 +56,9 @@ func SendToSolr(message []byte) error {
 }
 
 // SearchHotels busca hoteles en Solr según una consulta de búsqueda
-func SearchHotels(city string) (map[string]interface{}, error) {
-	// Construcción de la consulta para búsqueda exacta o por prefijo
-	query := fmt.Sprintf("city:%s*", city)
+func SearchHotels(queryTerm string) (map[string]interface{}, error) {
+	// Construcción de la consulta para búsqueda global
+	query := fmt.Sprintf("%s*", queryTerm)
 	solrURL := fmt.Sprintf("http://localhost:8983/solr/hotel_core/select?q=%s&wt=json", query)
 
 	resp, err := http.Get(solrURL)
