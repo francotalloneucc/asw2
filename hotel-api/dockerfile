@@ -1,14 +1,12 @@
-
 FROM golang:latest
 
 ADD . /hotel-api
 
 WORKDIR /hotel-api
-RUN go mod init hotel-api
 RUN go mod tidy
 RUN go build -o hotel-api
-RUN chmod +x /hotel-api
+RUN chmod +x /hotel-api/hotel-api
 
-EXPOSE 8080
+EXPOSE 3000
 
-ENTRYPOINT ["./hotel-api"]
+ENTRYPOINT ["./hotel-api"]  # SOLO UNA VEZ

@@ -4,10 +4,9 @@ FROM golang:latest
 ADD . /reservation-api
 
 WORKDIR /reservation-api
-RUN go mod init reservation-api
 RUN go mod tidy
 RUN go build -o reservation-api
-RUN chmod +x /reservation-api
+RUN chmod +x /reservation-api/reservation-api
 
 EXPOSE 3001
 

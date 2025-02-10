@@ -4,11 +4,13 @@ FROM golang:latest
 ADD . /search-api
 
 WORKDIR /search-api
-RUN go mod init search-api
 RUN go mod tidy
 RUN go build -o search-api
-RUN chmod +x /search-api
+RUN chmod +x /search-api/search-api
+
 
 EXPOSE 8082
 
 ENTRYPOINT ["./search-api"]
+
+
